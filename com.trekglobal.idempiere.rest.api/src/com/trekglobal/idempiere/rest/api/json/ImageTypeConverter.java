@@ -68,8 +68,8 @@ public class ImageTypeConverter implements ITypeConverter<Object> {
 			return null;
 		}
 
-		MImage img = MImage.get((Integer)value);
-		if (img == null) {
+		MImage img = new MImage(Env.getCtx(), (Integer)value, ThreadLocalTrx.getTrxName());
+		if (img.get_ID() <= 0) {
 			return null;
 		}
 
