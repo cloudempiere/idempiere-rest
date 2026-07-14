@@ -29,8 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.when;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -41,7 +40,7 @@ import org.compiere.util.Env;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
+import org.mockito.MockedConstruction;
 import org.mockito.MockitoAnnotations;
 
 import com.google.gson.JsonObject;
@@ -66,13 +65,11 @@ public class LocationTypeConverterTest extends RestTestCase {
 		when(mockColumn.getColumnName()).thenReturn("C_Location_ID");
 		when(mockColumn.getReferenceTableName()).thenReturn("C_Location");
 
-		MLocation mockLocation = mock(MLocation.class);
-		try (MockedStatic<MLocation> mocked = mockStatic(MLocation.class)) {
-			mocked.when(() -> MLocation.get(123456)).thenReturn(mockLocation);
-			when(mockLocation.get_ID()).thenReturn(123456);
-			when(mockLocation.get_Value("City")).thenReturn("New York");
-			when(mockLocation.get_Value("C_Region_ID")).thenReturn(200);
-
+		try (MockedConstruction<MLocation> mocked = mockConstruction(MLocation.class, (mock, context) -> {
+			when(mock.get_ID()).thenReturn(123456);
+			when(mock.get_Value("City")).thenReturn("New York");
+			when(mock.get_Value("C_Region_ID")).thenReturn(200);
+		})) {
 			Object result = converter.toJsonValue(mockColumn, 123456, null);
 			JsonObject json = (JsonObject) result;
 
@@ -89,14 +86,33 @@ public class LocationTypeConverterTest extends RestTestCase {
 		when(mockColumn.getColumnName()).thenReturn("C_Location_ID");
 		when(mockColumn.getReferenceTableName()).thenReturn("C_Location");
 
-		MLocation mockLocation = mock(MLocation.class);
-		try (MockedStatic<MLocation> mocked = mockStatic(MLocation.class)) {
-			mocked.when(() -> MLocation.get(123456)).thenReturn(mockLocation);
-			when(mockLocation.get_ID()).thenReturn(123456);
+		try (MockedConstruction<MLocation> mocked = mockConstruction(MLocation.class, (mock, context) -> {
+			when(mock.get_ID()).thenReturn(123456);
 			//invalid columns
-			when(mockLocation.get_Value("Cities")).thenReturn("New York");
-			when(mockLocation.get_Value("Region_ID")).thenReturn(200); 
+			when(mock.get_Value("Cities")).thenReturn("New York");
+			when(mock.get_Value("Region_ID")).thenReturn(200);
+		})) {
+			Object result = converter.toJsonValue(mockColumn, 123456, null);
+			JsonObject json = (JsonObject) result;
 
+			assertEquals(123456, json.get("id").getAsInt());
+			assertNull(json.get("City"));
+			assertNull(json.get("C_Region_ID"));
+			assertEquals("c_location", json.get("model-name").getAsString());
+		}
+	}
+
+	@Test
+	public void toJsonValueSkipsDerivedFieldsForInvalidLocationId() {
+		when(mockColumn.getAD_Reference_ID()).thenReturn(DisplayType.Location);
+		when(mockColumn.getColumnName()).thenReturn("C_Location_ID");
+		when(mockColumn.getReferenceTableName()).thenReturn("C_Location");
+
+		try (MockedConstruction<MLocation> mocked = mockConstruction(MLocation.class, (mock, context) -> {
+			when(mock.get_ID()).thenReturn(0);
+			when(mock.get_Value("City")).thenReturn("New York");
+			when(mock.get_Value("C_Region_ID")).thenReturn(200);
+		})) {
 			Object result = converter.toJsonValue(mockColumn, 123456, null);
 			JsonObject json = (JsonObject) result;
 

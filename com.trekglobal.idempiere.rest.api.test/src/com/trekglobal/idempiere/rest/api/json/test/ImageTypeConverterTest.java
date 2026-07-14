@@ -27,7 +27,7 @@ package com.trekglobal.idempiere.rest.api.json.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.when;
 
 import org.compiere.model.MColumn;
@@ -36,6 +36,7 @@ import org.compiere.util.Env;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.MockitoAnnotations;
 
 import com.google.gson.JsonObject;
@@ -47,8 +48,6 @@ public class ImageTypeConverterTest extends RestTestCase {
 	
 	@Mock
 	private MColumn mockColumn;
-	@Mock
-    private MImage image;
 
     @BeforeEach
     public void setUp() {
@@ -58,19 +57,19 @@ public class ImageTypeConverterTest extends RestTestCase {
 
     @Test
     public void toJsonValueReturnsJsonObjectForValidImage() {
-        when(image.getBinaryData()).thenReturn(new byte[]{1, 2, 3});
-        when(image.get_ID()).thenReturn(100);
-        when(image.get_TableName()).thenReturn("AD_Image");
         when(mockColumn.getColumnName()).thenReturn("ImageColumn");
-        mockStatic(MImage.class);
-        when(MImage.get(100)).thenReturn(image);
 
-        Object result = converter.toJsonValue(mockColumn, 100);
-        JsonObject json = (JsonObject) result;
+        try (MockedConstruction<MImage> mocked = mockConstruction(MImage.class, (mock, context) -> {
+            when(mock.get_ID()).thenReturn(100);
+            when(mock.getBinaryData()).thenReturn(new byte[]{1, 2, 3});
+        })) {
+            Object result = converter.toJsonValue(mockColumn, 100);
+            JsonObject json = (JsonObject) result;
 
-        assertEquals(100, json.get("id").getAsInt());
-        assertEquals("AQID", json.get("data").getAsString());
-        assertEquals("ad_image", json.get("model-name").getAsString());
+            assertEquals(100, json.get("id").getAsInt());
+            assertEquals("AQID", json.get("data").getAsString());
+            assertEquals("ad_image", json.get("model-name").getAsString());
+        }
     }
 
     @Test
@@ -81,10 +80,12 @@ public class ImageTypeConverterTest extends RestTestCase {
 
     @Test
     public void toJsonValueReturnsNullForInvalidImageId() {
-        when(MImage.get(999)).thenReturn(null);
-
-        Object result = converter.toJsonValue(mockColumn, 999);
-        assertNull(result);
+        try (MockedConstruction<MImage> mocked = mockConstruction(MImage.class, (mock, context) -> {
+            when(mock.get_ID()).thenReturn(0);
+        })) {
+            Object result = converter.toJsonValue(mockColumn, 999);
+            assertNull(result);
+        }
     }
 
     @Test
