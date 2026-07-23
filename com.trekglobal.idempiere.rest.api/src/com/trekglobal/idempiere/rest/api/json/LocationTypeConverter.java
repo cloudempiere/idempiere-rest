@@ -118,34 +118,35 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 			
 			MRestViewColumn[] viewColumns = referenceView != null ? referenceView.getColumns() : null;
 			int count = viewColumns != null ? viewColumns.length : columns.length;
-			if (loc != null && loc.get_ID() > 0)
-			for(int i = 0; i < count; i++) {
-				MColumn column = viewColumns != null ? MColumn.get(viewColumns[i].getAD_Column_ID()) : columns[i];
-				if(column.isKey())continue;
-				
-				columnName = column.getColumnName();
-				
-				if (columnName.endsWith("_ID")) {
-					if((columnValue = loc.get_Value(columnName))!=null) {
-						JsonObject refChild = new JsonObject();
-						if (viewColumns == null)
-							refChild.addProperty("propertyLabel",Msg.getElement(Env.getCtx(), columnName));
-						if (value instanceof Number)
-							refChild.addProperty("id", (Integer)columnValue);
-						else
-							refChild.addProperty("id", value.toString());
-						String displayValue = getColumnLookup(column).getDisplay(columnValue);
-						if(displayValue!=null)
-							refChild.addProperty("identifier",displayValue);
-						if (viewColumns != null && viewColumns[i].getREST_ReferenceView_ID() > 0)
-							refChild.addProperty("view-name", MRestView.get(viewColumns[i].getREST_ReferenceView_ID()).getName());
-						else
-							refChild.addProperty("model-name", MTable.get(Env.getCtx(), columnName.replace("_ID", "")).getTableName().toLowerCase());
-						ref.add(viewColumns != null ? viewColumns[i].getName() : columnName, refChild);
-					}
-				} else {
-					if((columnValue = loc.get_Value(columnName))!=null) {
-						ref.addProperty(viewColumns != null ? viewColumns[i].getName() : columnName, columnValue.toString());
+			if (loc != null && loc.get_ID() > 0) {
+				for(int i = 0; i < count; i++) {
+					MColumn column = viewColumns != null ? MColumn.get(viewColumns[i].getAD_Column_ID()) : columns[i];
+					if(column.isKey())continue;
+					
+					columnName = column.getColumnName();
+					
+					if (columnName.endsWith("_ID")) {
+						if((columnValue = loc.get_Value(columnName))!=null) {
+							JsonObject refChild = new JsonObject();
+							if (viewColumns == null)
+								refChild.addProperty("propertyLabel",Msg.getElement(Env.getCtx(), columnName));
+							if (value instanceof Number)
+								refChild.addProperty("id", (Integer)columnValue);
+							else
+								refChild.addProperty("id", value.toString());
+							String displayValue = getColumnLookup(column).getDisplay(columnValue);
+							if(displayValue!=null)
+								refChild.addProperty("identifier",displayValue);
+							if (viewColumns != null && viewColumns[i].getREST_ReferenceView_ID() > 0)
+								refChild.addProperty("view-name", MRestView.get(viewColumns[i].getREST_ReferenceView_ID()).getName());
+							else
+								refChild.addProperty("model-name", MTable.get(Env.getCtx(), columnName.replace("_ID", "")).getTableName().toLowerCase());
+							ref.add(viewColumns != null ? viewColumns[i].getName() : columnName, refChild);
+						}
+					} else {
+						if((columnValue = loc.get_Value(columnName))!=null) {
+							ref.addProperty(viewColumns != null ? viewColumns[i].getName() : columnName, columnValue.toString());
+						}
 					}
 				}
 			}
