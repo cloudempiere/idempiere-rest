@@ -57,7 +57,22 @@ public interface ITypeConverter<T> {
 	default Object toJsonValue(MColumn column, T value, MRestView referenceView) {
 		return toJsonValue(column, value);
 	}
-	
+
+	/**
+	 * Convert AD type to json type within the given transaction.
+	 * <p>Converters that read a referenced model (e.g. C_Location, AD_Image) must use
+	 * {@code trxName} so rows co-created earlier in the same still-open request transaction
+	 * are visible. The default ignores {@code trxName} for converters that do not read the DB.
+	 * @param column
+	 * @param value
+	 * @param referenceView
+	 * @param trxName transaction name, or null to read committed data
+	 * @return Object
+	 */
+	default Object toJsonValue(MColumn column, T value, MRestView referenceView, String trxName) {
+		return toJsonValue(column, value, referenceView);
+	}
+
 	/**
 	 * Convert AD type to json type
 	 * @param field
@@ -67,13 +82,24 @@ public interface ITypeConverter<T> {
 	public Object toJsonValue(GridField field, T value);
 
 	/**
+	 * Convert AD type to json type within the given transaction.
+	 * @param field
+	 * @param value
+	 * @param trxName transaction name, or null to read committed data
+	 * @return Object
+	 */
+	default Object toJsonValue(GridField field, T value, String trxName) {
+		return toJsonValue(field, value);
+	}
+
+	/**
 	 * Convert json type to AD type
 	 * @param column
 	 * @param value
 	 * @return Object
 	 */
 	public Object fromJsonValue(MColumn column, JsonElement value);
-	
+
 	/**
 	 * Convert json type to AD type
 	 * @param column
@@ -84,7 +110,22 @@ public interface ITypeConverter<T> {
 	default Object fromJsonValue(MColumn column, JsonElement value, MRestView referenceView) {
 		return fromJsonValue(column, value);
 	}
-	
+
+	/**
+	 * Convert json type to AD type within the given transaction.
+	 * <p>Converters that write or resolve a referenced model (e.g. C_Location, AD_Image, lookups)
+	 * must use {@code trxName} so the write participates in the caller's transaction and is rolled
+	 * back with it. The default ignores {@code trxName} for converters that do not touch the DB.
+	 * @param column
+	 * @param value
+	 * @param referenceView
+	 * @param trxName transaction name, or null for auto-commit
+	 * @return Object
+	 */
+	default Object fromJsonValue(MColumn column, JsonElement value, MRestView referenceView, String trxName) {
+		return fromJsonValue(column, value, referenceView);
+	}
+
 	/**
 	 * Convert json type to AD type
 	 * @param field
@@ -92,4 +133,15 @@ public interface ITypeConverter<T> {
 	 * @return Object
 	 */
 	public Object fromJsonValue(GridField field, JsonElement value);
+
+	/**
+	 * Convert json type to AD type within the given transaction.
+	 * @param field
+	 * @param value
+	 * @param trxName transaction name, or null for auto-commit
+	 * @return Object
+	 */
+	default Object fromJsonValue(GridField field, JsonElement value, String trxName) {
+		return fromJsonValue(field, value);
+	}
 }

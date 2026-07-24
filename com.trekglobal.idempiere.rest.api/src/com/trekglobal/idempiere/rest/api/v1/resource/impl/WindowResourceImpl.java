@@ -972,7 +972,7 @@ public class WindowResourceImpl implements WindowResource {
 							.build();
 					break;
 				}				
-				serializer.fromJson(jsonObject, gridTab);
+				serializer.fromJson(jsonObject, gridTab, trx.getTrxName());
 				if (save && gridTab.needSave(true, true)) {
 					ErrorDataStatusListener edsl = new ErrorDataStatusListener();
 					gridTab.getTableModel().addDataStatusListener(edsl);
@@ -1018,7 +1018,7 @@ public class WindowResourceImpl implements WindowResource {
 									}
 									gridTab.setValue(gridTab.getLinkColumnName(), recordId);
 								}
-								serializer.fromJson(childJsonObject, gridTab);
+								serializer.fromJson(childJsonObject, gridTab, trx.getTrxName());
 								if (save && gridTab.needSave(true, true)) {
 									if (!gridTab.dataSave(false))  {
 										error[0] = Boolean.TRUE;
@@ -1027,7 +1027,7 @@ public class WindowResourceImpl implements WindowResource {
 										gridTab.dataRefresh(false);
 									}
 								}
-								childJsonObject = serializer.toJson(gridTab);
+								childJsonObject = serializer.toJson(gridTab, trx.getTrxName());
 								updatedArray.add(childJsonObject);
 							}
 						});
@@ -1079,7 +1079,7 @@ public class WindowResourceImpl implements WindowResource {
 		JsonObject updatedJsonObject = null;
 		if (headerTab != null) {
 			IGridTabSerializer serializer = IGridTabSerializer.getGridTabSerializer(headerTab.getAD_Tab_UU());
-			updatedJsonObject = serializer.toJson(headerTab);
+			updatedJsonObject = serializer.toJson(headerTab, trx.getTrxName());
 			if (childMap.size() > 0) {
 				for(String slug : childMap.keySet()) {
 					updatedJsonObject.add(slug, childMap.get(slug));
@@ -1170,7 +1170,7 @@ public class WindowResourceImpl implements WindowResource {
 										.build().toString())
 								.build();
 					}
-					serializer.fromJson(jsonObject, gridTab);
+					serializer.fromJson(jsonObject, gridTab, trx.getTrxName());
 					if (save) {
 						if (!gridTab.dataSave(false))  {
 							trx.rollback();
@@ -1215,7 +1215,7 @@ public class WindowResourceImpl implements WindowResource {
 									return;
 								}
 								gridTab.setValue(gridTab.getLinkColumnName(), finalHeaderTab.getKeyID(0));								
-								serializer.fromJson(childJsonObject, gridTab);
+								serializer.fromJson(childJsonObject, gridTab, trx.getTrxName());
 								if (save) {
 									if (!gridTab.dataSave(false))  {
 										error[0] = Boolean.TRUE;
@@ -1224,7 +1224,7 @@ public class WindowResourceImpl implements WindowResource {
 										gridTab.dataRefresh(false);
 									}
 								}
-								childJsonObject = serializer.toJson(gridTab);
+								childJsonObject = serializer.toJson(gridTab, trx.getTrxName());
 								updatedArray.add(childJsonObject);
 							}
 						});
@@ -1271,7 +1271,7 @@ public class WindowResourceImpl implements WindowResource {
 		JsonObject updatedJsonObject = null;
 		if (headerTab != null) {
 			IGridTabSerializer serializer = IGridTabSerializer.getGridTabSerializer(headerTab.getAD_Tab_UU());
-			updatedJsonObject = serializer.toJson(headerTab);
+			updatedJsonObject = serializer.toJson(headerTab, trx.getTrxName());
 			if (childMap.size() > 0) {
 				for(String slug : childMap.keySet()) {
 					updatedJsonObject.add(slug, childMap.get(slug));

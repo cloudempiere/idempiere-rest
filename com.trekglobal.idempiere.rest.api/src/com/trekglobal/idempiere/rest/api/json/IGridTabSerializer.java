@@ -44,9 +44,19 @@ public interface IGridTabSerializer {
 	 * @return JsonObject
 	 */
 	public default JsonObject toJson(GridTab gridTab) {
-		return toJson(gridTab, null, null);
+		return toJson(gridTab, (String[])null, (String[])null, (String)null);
 	}
-	
+
+	/**
+	 * Convert current row to json within the given transaction
+	 * @param gridTab
+	 * @param trxName transaction name, or null to read committed data
+	 * @return JsonObject
+	 */
+	public default JsonObject toJson(GridTab gridTab, String trxName) {
+		return toJson(gridTab, (String[])null, (String[])null, trxName);
+	}
+
 	/**
 	 * Convert current row to json
 	 * @param gridTab
@@ -55,13 +65,35 @@ public interface IGridTabSerializer {
 	 * @return JsonObject
 	 */
 	public JsonObject toJson(GridTab gridTab, String[] includes, String[] excludes);
-	
+
+	/**
+	 * Convert current row to json within the given transaction
+	 * @param gridTab
+	 * @param includes columns to include
+	 * @param excludes columns to exclude
+	 * @param trxName transaction name, or null to read committed data
+	 * @return JsonObject
+	 */
+	public default JsonObject toJson(GridTab gridTab, String[] includes, String[] excludes, String trxName) {
+		return toJson(gridTab, includes, excludes);
+	}
+
 	/**
 	 * Copy values from JsonObject to GridTab
 	 * @param json
-	 * @param gridTab 
+	 * @param gridTab
 	 */
 	public void fromJson(JsonObject json, GridTab gridTab);
+
+	/**
+	 * Copy values from JsonObject to GridTab within the given transaction
+	 * @param json
+	 * @param gridTab
+	 * @param trxName transaction name, or null for auto-commit
+	 */
+	public default void fromJson(JsonObject json, GridTab gridTab, String trxName) {
+		fromJson(json, gridTab);
+	}
 	
 	/**
 	 * Get GridTab serializer

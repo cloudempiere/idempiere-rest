@@ -69,11 +69,16 @@ public class DefaultPOSerializer implements IPOSerializer, IPOSerializerFactory 
 
 	@Override
 	public JsonObject toJson(PO po, String[] includes, String[] excludes) {
-		return toJson(po, null, includes, excludes);				
+		return toJson(po, null, includes, excludes, null);
 	}
-	
+
 	@Override
 	public JsonObject toJson(PO po, MRestView view, String[] includes, String[] excludes) {
+		return toJson(po, view, includes, excludes, null);
+	}
+
+	@Override
+	public JsonObject toJson(PO po, MRestView view, String[] includes, String[] excludes, String trxName) {
 		JsonObject json = new JsonObject();
 		MTable table = MTable.get(po.get_Table_ID());
 		String keyColumn = null;
@@ -134,8 +139,8 @@ public class DefaultPOSerializer implements IPOSerializer, IPOSerializerFactory 
 				//get property name from view definition or default conversion
 				String propertyName = viewColumn != null ? viewColumn.getName()
 						: MSysConfig.getBooleanValue("REST_COLUMNNAME_TOLOWERCASE", false) ? TypeConverterUtils.toPropertyName(columnName) : columnName;
-				Object jsonValue = TypeConverterUtils.toJsonValue(column, value, viewColumn != null && viewColumn.getREST_ReferenceView_ID() > 0 
-						? MRestView.get(viewColumn.getREST_ReferenceView_ID()) : null);
+				Object jsonValue = TypeConverterUtils.toJsonValue(column, value, viewColumn != null && viewColumn.getREST_ReferenceView_ID() > 0
+						? MRestView.get(viewColumn.getREST_ReferenceView_ID()) : null, trxName);
 				if (jsonValue != null) {					
 					JsonObject target = json;
 					//rest view support json path mapping to nested json value object
@@ -182,11 +187,16 @@ public class DefaultPOSerializer implements IPOSerializer, IPOSerializerFactory 
 
 	@Override
 	public PO fromJson(JsonObject json, MTable table) {
-		return fromJson(json, table, null);
+		return fromJson(json, table, (MRestView)null, (String)null);
 	}
-	
+
 	@Override
 	public PO fromJson(JsonObject json, MTable table, MRestView view) {
+		return fromJson(json, table, view, null);
+	}
+
+	@Override
+	public PO fromJson(JsonObject json, MTable table, MRestView view, String trxName) {
 		PO po = table.isUUIDKeyTable() ? table.getPOByUU(PO.UUID_NEW_RECORD, null) : table.getPO(0, null);
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), table.getAD_Table_ID());
 		validateJsonFields(json, po, view);
@@ -233,8 +243,8 @@ public class DefaultPOSerializer implements IPOSerializer, IPOSerializerFactory 
 					continue;
 				}
 			}
-			Object value = TypeConverterUtils.fromJsonValue(column, field, viewColumn != null && viewColumn.getREST_ReferenceView_ID() > 0 
-					? MRestView.get(viewColumn.getREST_ReferenceView_ID()) : null);
+			Object value = TypeConverterUtils.fromJsonValue(column, field, viewColumn != null && viewColumn.getREST_ReferenceView_ID() > 0
+					? MRestView.get(viewColumn.getREST_ReferenceView_ID()) : null, trxName);
 			if (! isValueUpdated(po.get_ValueOfColumn(column.getAD_Column_ID()), value))
 				continue;
 			if (viewColumn != null && !Util.isEmpty(viewColumn.getReadOnlyLogic(), true)) {
@@ -262,11 +272,16 @@ public class DefaultPOSerializer implements IPOSerializer, IPOSerializerFactory 
 
 	@Override
 	public PO fromJson(JsonObject json, PO po) {
-		return fromJson(json, po, null);
+		return fromJson(json, po, (MRestView)null, (String)null);
 	}
-	
+
 	@Override
 	public PO fromJson(JsonObject json, PO po, MRestView view) {
+		return fromJson(json, po, view, null);
+	}
+
+	@Override
+	public PO fromJson(JsonObject json, PO po, MRestView view, String trxName) {
 		MTable table = MTable.get(Env.getCtx(), po.get_Table_ID());
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), table.getAD_Table_ID());
 		validateJsonFields(json, po, view);
@@ -308,7 +323,7 @@ public class DefaultPOSerializer implements IPOSerializer, IPOSerializerFactory 
 				if (field == null)
 					continue;
 			}
-			Object value = TypeConverterUtils.fromJsonValue(column, field);
+			Object value = TypeConverterUtils.fromJsonValue(column, field, null, trxName);
 			if (! isValueUpdated(po.get_ValueOfColumn(column.getAD_Column_ID()), value))
 				continue;
 			MRestViewColumn viewColumn = viewColumns != null ? viewColumns[i] : null;

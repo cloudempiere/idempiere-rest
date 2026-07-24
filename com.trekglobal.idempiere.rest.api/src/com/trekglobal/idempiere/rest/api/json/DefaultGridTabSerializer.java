@@ -56,6 +56,11 @@ public class DefaultGridTabSerializer implements IGridTabSerializer, IGridTabSer
 
 	@Override
 	public JsonObject toJson(GridTab gridTab, String[] includes, String[] excludes) {
+		return toJson(gridTab, includes, excludes, null);
+	}
+
+	@Override
+	public JsonObject toJson(GridTab gridTab, String[] includes, String[] excludes, String trxName) {
 		JsonObject json = new JsonObject();
 		String keyColumn = gridTab.getKeyColumnName();
 		if (!Util.isEmpty(keyColumn, true)) {
@@ -98,7 +103,7 @@ public class DefaultGridTabSerializer implements IGridTabSerializer, IGridTabSer
 				continue;
 			
 			String propertyName = column.getColumnName();
-			Object jsonValue = TypeConverterUtils.toJsonValue(gridField, value);
+			Object jsonValue = TypeConverterUtils.toJsonValue(gridField, value, trxName);
 			if (jsonValue != null) {
 				if (jsonValue instanceof Number)
 					json.addProperty(propertyName, (Number)jsonValue);
@@ -118,6 +123,11 @@ public class DefaultGridTabSerializer implements IGridTabSerializer, IGridTabSer
 	
 	@Override
 	public void fromJson(JsonObject json, GridTab gridTab) {
+		fromJson(json, gridTab, null);
+	}
+
+	@Override
+	public void fromJson(JsonObject json, GridTab gridTab, String trxName) {
 		Set<String> jsonFields = json.keySet();
 		for(int i = 0; i < gridTab.getFieldCount(); i++) {
 			GridField gridField = gridTab.getField(i);
@@ -154,7 +164,7 @@ public class DefaultGridTabSerializer implements IGridTabSerializer, IGridTabSer
 				}
 			}
 			
-			Object value = TypeConverterUtils.fromJsonValue(gridField, jsonField);
+			Object value = TypeConverterUtils.fromJsonValue(gridField, jsonField, trxName);
 			Object oldValue = gridField.getValue();
 			if (value == null && oldValue == null)
 				continue;

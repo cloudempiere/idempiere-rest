@@ -48,7 +48,6 @@ import com.google.gson.JsonPrimitive;
 
 import com.trekglobal.idempiere.rest.api.model.MRestView;
 import com.trekglobal.idempiere.rest.api.model.MRestViewColumn;
-import com.trekglobal.idempiere.rest.api.util.ThreadLocalTrx;
 
 /**
  * json type converter for C_Location
@@ -66,19 +65,29 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 
 	@Override
 	public Object toJsonValue(MColumn column, Object value) {
-		return toJsonValue(column, value, null);
+		return toJsonValue(column, value, (MRestView)null, (String)null);
 	}
-	
+
 	@Override
 	public Object toJsonValue(MColumn column, Object value, MRestView referenceView) {
+		return toJsonValue(column, value, referenceView, (String)null);
+	}
+
+	@Override
+	public Object toJsonValue(MColumn column, Object value, MRestView referenceView, String trxName) {
 		String label = Msg.getElement(Env.getCtx(), column.getColumnName());
 		Lookup lookup = new MLocationLookup(Env.getCtx(), 0);
-		return toJsonValue(column.getAD_Reference_ID(), label, lookup, column.getReferenceTableName(), value, referenceView);
+		return toJsonValue(column.getAD_Reference_ID(), label, lookup, column.getReferenceTableName(), value, referenceView, trxName);
 	}
 
 	@Override
 	public Object toJsonValue(GridField field, Object value) {
-		return toJsonValue(field.getDisplayType(), field.getHeader(), field.getLookup(), getReferenceTableNameFromField(field), value, null);
+		return toJsonValue(field, value, (String)null);
+	}
+
+	@Override
+	public Object toJsonValue(GridField field, Object value, String trxName) {
+		return toJsonValue(field.getDisplayType(), field.getHeader(), field.getLookup(), getReferenceTableNameFromField(field), value, null, trxName);
 	}
 	
 	private String getReferenceTableNameFromField(GridField field) {
@@ -95,9 +104,9 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 		return refTableName;
 	}
 	
-	private Object toJsonValue(int displayType, String label, Lookup lookup, String refTableName, Object value, MRestView referenceView) {
+	private Object toJsonValue(int displayType, String label, Lookup lookup, String refTableName, Object value, MRestView referenceView, String trxName) {
 		if (lookup != null && value != null && value instanceof Integer) {
-			MLocation loc = new MLocation(Env.getCtx(), (Integer)value, ThreadLocalTrx.getTrxName());
+			MLocation loc = new MLocation(Env.getCtx(), (Integer)value, trxName);
 			JsonObject ref = new JsonObject();
 			if (referenceView == null)
 				ref.addProperty("propertyLabel", label);
@@ -158,24 +167,38 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 		
 	@Override
 	public Object fromJsonValue(GridField field, JsonElement value) {
-		return fromJson(value);
+		return fromJsonValue(field, value, (String)null);
+	}
+
+	@Override
+	public Object fromJsonValue(GridField field, JsonElement value, String trxName) {
+		return fromJson(value, null, trxName);
 	}
 
 	@Override
 	public Object fromJsonValue(MColumn column, JsonElement value) {
-		return fromJsonValue(column, value, null);
+		return fromJsonValue(column, value, (MRestView)null, (String)null);
 	}
-	
+
 	@Override
 	public Object fromJsonValue(MColumn column, JsonElement value, MRestView referenceView) {
-		return fromJson(value, referenceView);
+		return fromJsonValue(column, value, referenceView, (String)null);
 	}
-	
+
+	@Override
+	public Object fromJsonValue(MColumn column, JsonElement value, MRestView referenceView, String trxName) {
+		return fromJson(value, referenceView, trxName);
+	}
+
 	public Object fromJson(JsonElement element) {
-		return fromJson(element, null);
+		return fromJson(element, null, null);
 	}
-	
+
 	public Object fromJson(JsonElement element, MRestView referenceView) {
+		return fromJson(element, referenceView, null);
+	}
+
+	public Object fromJson(JsonElement element, MRestView referenceView, String trxName) {
 		if (element != null && element.isJsonObject()) {
 		
 			JsonObject json = element.getAsJsonObject();
@@ -189,7 +212,7 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 					C_Location_ID = 0;
 			}
 
-			MLocation po = new MLocation(Env.getCtx(), C_Location_ID, ThreadLocalTrx.getTrxName());
+			MLocation po = new MLocation(Env.getCtx(), C_Location_ID, trxName);
 
 			MTable table = MTable.get(Env.getCtx(), MLocation.Table_ID);
 			POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), table.getAD_Table_ID());

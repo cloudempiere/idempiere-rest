@@ -441,7 +441,7 @@ public class ModelResourceImpl implements ModelResource {
 			Gson gson = new GsonBuilder().create();
 			JsonObject jsonObject = gson.fromJson(jsonText, JsonObject.class);
 			IPOSerializer serializer = IPOSerializer.getPOSerializer(tableName, MTable.getClass(tableName));
-			PO po = serializer.fromJson(jsonObject, table, view);
+			PO po = serializer.fromJson(jsonObject, table, view, trx.getTrxName());
 			if (po.getAD_Client_ID() != Env.getAD_Client_ID(Env.getCtx())) {
 				log.log(Level.SEVERE, "Tenant " + Env.getAD_Client_ID(Env.getCtx()) + " attempt to create record for tenant: " + po.getAD_Client_ID(), 
 						new CrossTenantException(true, po.get_TableName(), -1));
@@ -501,7 +501,7 @@ public class ModelResourceImpl implements ModelResource {
 			if (threadLocalTrxName == null)
 				trx.commit(true);
 			po.load(trx.getTrxName());
-			jsonObject = serializer.toJson(po, view);
+			jsonObject = serializer.toJson(po, view, trx.getTrxName());
 			if (processMsg.length() > 0)
 				jsonObject.addProperty("doc-processmsg", processMsg.toString());
 			if (detailMap.size() > 0) {
@@ -568,7 +568,7 @@ public class ModelResourceImpl implements ModelResource {
 					fieldArray.forEach(e -> {
 						if (e.isJsonObject()) {
 							JsonObject childJsonObject = e.getAsJsonObject();
-							PO childPO = childSerializer.fromJson(childJsonObject, childTable, finalChildView);
+							PO childPO = childSerializer.fromJson(childJsonObject, childTable, finalChildView, trx.getTrxName());
 							if (!RestUtils.hasRoleUpdateAccess(childPO.getAD_Client_ID(), childPO.getAD_Org_ID(), childPO.get_Table_ID(), 0, true))
 								throw new AdempiereException("AccessCannotUpdate");
 							
@@ -600,7 +600,7 @@ public class ModelResourceImpl implements ModelResource {
 								EventManager.getInstance().unregister(eventHandler);
 							}
 							fireRestSaveEvent(childPO, PO_AFTER_REST_SAVE, true);
-							childJsonObject = childSerializer.toJson(childPO, finalChildView);
+							childJsonObject = childSerializer.toJson(childPO, finalChildView, trx.getTrxName());
 							JsonObject newChildJsonObject = e.getAsJsonObject();
 							Map<String, JsonArray> childDetailMap = new LinkedHashMap<>();
 							Set<String> fields = newChildJsonObject.keySet();
@@ -672,7 +672,7 @@ public class ModelResourceImpl implements ModelResource {
 			Gson gson = new GsonBuilder().create();
 			JsonObject jsonObject = gson.fromJson(jsonText, JsonObject.class);
 			IPOSerializer serializer = IPOSerializer.getPOSerializer(tableName, MTable.getClass(tableName));
-			po = serializer.fromJson(jsonObject, po, view);			
+			po = serializer.fromJson(jsonObject, po, view, trx.getTrxName());			
 			po.set_TrxName(trx.getTrxName());
 
 			// Event handler for mandatory fields validation
@@ -754,10 +754,10 @@ public class ModelResourceImpl implements ModelResource {
 										throw new IDempiereRestException("Delete Error", "Cannot delete non-existing record", Status.NOT_FOUND);
 									
 									if (childPO == null) {
-										childPO = childSerializer.fromJson(childJsonObject, childTable, finalChildView);
+										childPO = childSerializer.fromJson(childJsonObject, childTable, finalChildView, trx.getTrxName());
 										childPO.set_ValueOfColumn(RestUtils.getKeyColumnName(tableName), parentId);
 									} else  if (!delete){
-										childPO = childSerializer.fromJson(childJsonObject, childPO, finalChildView);
+										childPO = childSerializer.fromJson(childJsonObject, childPO, finalChildView, trx.getTrxName());
 									}
 									childPO.set_TrxName(trx.getTrxName());
 									if (delete) {
@@ -790,7 +790,7 @@ public class ModelResourceImpl implements ModelResource {
 											EventManager.getInstance().unregister(childEventHandler);
 										}
 										fireRestSaveEvent(childPO, PO_AFTER_REST_SAVE, false);
-										childJsonObject = serializer.toJson(childPO, finalChildView);
+										childJsonObject = serializer.toJson(childPO, finalChildView, trx.getTrxName());
 										savedArray.add(childJsonObject);
 									}									
 								}
@@ -822,7 +822,7 @@ public class ModelResourceImpl implements ModelResource {
 			}
 			
 			po.load(trx.getTrxName());
-			jsonObject = serializer.toJson(po, view);
+			jsonObject = serializer.toJson(po, view, trx.getTrxName());
 			if (processMsg.length() > 0)
 				jsonObject.addProperty("doc-processmsg", processMsg.toString());
 			if (detailMap.size() > 0) {

@@ -37,7 +37,7 @@ import org.compiere.util.Util;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.trekglobal.idempiere.rest.api.util.ThreadLocalTrx;
+import com.trekglobal.idempiere.rest.api.model.MRestView;
 
 /**
  * json type converter for AD_Image
@@ -54,21 +54,31 @@ public class ImageTypeConverter implements ITypeConverter<Object> {
 
 	@Override
 	public Object toJsonValue(MColumn column, Object value) {
+		return toJsonValue(column, value, (MRestView)null, (String)null);
+	}
+
+	@Override
+	public Object toJsonValue(MColumn column, Object value, MRestView referenceView, String trxName) {
 		String label = Msg.getElement(Env.getCtx(), column.getColumnName());
-		return toJsonValue(label, value);
+		return toJsonValue(label, value, trxName);
 	}
 
 	@Override
 	public Object toJsonValue(GridField field, Object value) {
-		return toJsonValue(field.getHeader(), value);
+		return toJsonValue(field, value, (String)null);
 	}
 
-	private Object toJsonValue(String label, Object value) {
+	@Override
+	public Object toJsonValue(GridField field, Object value, String trxName) {
+		return toJsonValue(field.getHeader(), value, trxName);
+	}
+
+	private Object toJsonValue(String label, Object value, String trxName) {
 		if (value == null) {
 			return null;
 		}
 
-		MImage img = new MImage(Env.getCtx(), (Integer)value, ThreadLocalTrx.getTrxName());
+		MImage img = new MImage(Env.getCtx(), (Integer)value, trxName);
 		if (img.get_ID() <= 0) {
 			return null;
 		}
@@ -92,15 +102,29 @@ public class ImageTypeConverter implements ITypeConverter<Object> {
 		
 	@Override
 	public Object fromJsonValue(GridField field, JsonElement value) {
-		return fromJson(value);
+		return fromJsonValue(field, value, (String)null);
+	}
+
+	@Override
+	public Object fromJsonValue(GridField field, JsonElement value, String trxName) {
+		return fromJson(value, trxName);
 	}
 
 	@Override
 	public Object fromJsonValue(MColumn column, JsonElement value) {
-		return fromJson(value);
+		return fromJsonValue(column, value, (MRestView)null, (String)null);
 	}
-	
+
+	@Override
+	public Object fromJsonValue(MColumn column, JsonElement value, MRestView referenceView, String trxName) {
+		return fromJson(value, trxName);
+	}
+
 	public Object fromJson(JsonElement value) {
+		return fromJson(value, null);
+	}
+
+	public Object fromJson(JsonElement value, String trxName) {
 		if (value != null && value.isJsonObject()) {
 		
 			JsonObject ref = value.getAsJsonObject();
@@ -128,7 +152,7 @@ public class ImageTypeConverter implements ITypeConverter<Object> {
 				fileURL = primitive.getAsString();
 			}
 
-			MImage image = new MImage(Env.getCtx(), AD_Image_ID, ThreadLocalTrx.getTrxName());
+			MImage image = new MImage(Env.getCtx(), AD_Image_ID, trxName);
 			JsonElement data = ref.get("data");
 			if (data != null) {
 				if (fileName != null)
