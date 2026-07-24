@@ -46,8 +46,10 @@ import java.util.regex.Pattern;
 import org.adempiere.base.Service;
 import org.adempiere.base.ServiceQuery;
 import org.compiere.model.GridField;
+import org.compiere.model.Lookup;
 import org.compiere.model.MColumn;
 import org.compiere.util.DisplayType;
+import org.compiere.util.NamePair;
 import org.compiere.util.Util;
 
 import com.google.gson.JsonElement;
@@ -236,11 +238,31 @@ public class TypeConverterUtils {
 	}
 	
 	/**
+	 * Resolve the display identifier for a lookup value within the given transaction.
+	 * <p>Uses {@link Lookup#getDirect(Object, boolean, boolean, String)} so a referenced row
+	 * co-created earlier in the same still-open request transaction is visible, and falls back
+	 * to the cached {@link Lookup#getDisplay(Object)} when no transaction is supplied or the
+	 * direct read returns nothing.
+	 * @param lookup lookup
+	 * @param value key value
+	 * @param trxName transaction name, or null to read committed data
+	 * @return display identifier
+	 */
+	public static String getIdentifier(Lookup lookup, Object value, String trxName) {
+		if (trxName != null) {
+			NamePair pair = lookup.getDirect(value, false, false, trxName);
+			if (pair != null)
+				return pair.getName();
+		}
+		return lookup.getDisplay(value);
+	}
+
+	/**
 	 * convert arbitrary text to slug
 	 * @param input
 	 * @return slug
 	 */
-	public static String slugify(String input) {  
+	public static String slugify(String input) {
 		String noseparators = SEPARATORS.matcher(input).replaceAll("-");
 	    String normalized = Normalizer.normalize(noseparators, Form.NFD);
 	    String slug = NONLATIN.matcher(normalized).replaceAll("");

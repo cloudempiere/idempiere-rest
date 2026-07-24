@@ -114,7 +114,7 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 				ref.addProperty("id", ((Number)value).intValue());
 			else
 				ref.addProperty("id", value.toString());
-			String display = lookup.getDisplay(value);
+			String display = TypeConverterUtils.getIdentifier(lookup, value, trxName);
 			if (!Util.isEmpty(display, true)) {
 				ref.addProperty("identifier", display);
 			}							
@@ -143,7 +143,7 @@ public class LocationTypeConverter implements ITypeConverter<Object> {
 								refChild.addProperty("id", (Integer)columnValue);
 							else
 								refChild.addProperty("id", value.toString());
-							String displayValue = getColumnLookup(column).getDisplay(columnValue);
+							String displayValue = TypeConverterUtils.getIdentifier(getColumnLookup(column), columnValue, trxName);
 							if(displayValue!=null)
 								refChild.addProperty("identifier",displayValue);
 							if (viewColumns != null && viewColumns[i].getREST_ReferenceView_ID() > 0)
