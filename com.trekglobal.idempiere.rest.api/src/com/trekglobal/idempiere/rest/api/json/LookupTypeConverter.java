@@ -171,7 +171,7 @@ public class LookupTypeConverter implements ITypeConverter<Object> {
 			ref.addProperty("id", ((Number)value).intValue());
 		else
 			ref.addProperty("id", value.toString());
-		String display = lookup.getDisplay(value);
+		String display = TypeConverterUtils.getIdentifier(lookup, value, trxName);
 		if (!Util.isEmpty(display, true)) {
 			ref.addProperty("identifier", display);
 		}							
